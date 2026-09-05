@@ -8,6 +8,7 @@ from app.ingestion import chunk_documents, load_documents
 from app.retrieval import Retriever
 from app.schemas import AskRequest, AskResponse, SourceResponse
 from app.vector_store import LocalVectorStore
+from app.embeddings import OpenAIEmbeddingProvider
 
 DATA_DIRECTORY = Path(__file__).parent.parent / "data"
 
@@ -17,7 +18,10 @@ async def lifespan(app: FastAPI):
     documents = load_documents(DATA_DIRECTORY)
     chunks = chunk_documents(documents)
 
-    app.state.retriever = Retriever(LocalVectorStore(chunks))
+    embedding_provider = OpenAIEmbeddingProvider()
+    vector_store = LocalVectorStore(chunks, embedding_provider)
+
+    app.state.retriever = Retriever(vector_store)
     app.state.answer_generator = AnswerGenerator()
 
     yield
