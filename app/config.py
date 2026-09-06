@@ -8,8 +8,9 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5-mini"
     openai_embedding_model: str = "text-embedding-3-small"
 
-    google_service_account_file: Path
-    google_drive_folder_id: str
+    google_service_account_file: Path | None = None
+    google_drive_folder_id: str | None = None
+    enable_google_drive: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

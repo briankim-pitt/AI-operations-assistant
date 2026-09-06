@@ -7,6 +7,8 @@ class AskRequest(BaseModel):
 
 class SourceResponse(BaseModel):
     source: str
+    provider: str
+    source_url: str
     chunk_index: int
     score: float
     excerpt: str

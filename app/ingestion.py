@@ -43,6 +43,9 @@ def chunk_documents(
                     content=" ".join(chunk_words),
                     source=document.source,
                     chunk_index=chunk_index,
+                    source_url=document.source_url,
+                    provider=document.provider,
+                    external_id=document.external_id,
                 )
             )
 

@@ -9,12 +9,13 @@ description = "A learning-focused RAG API for fictional company operations docum
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
-    "openai>=1.0",
+    "openai>=2.0,<3.0",
     "pydantic-settings>=2.0",
     "scikit-learn>=1.5",
     "uvicorn[standard]>=0.30",
     "google-api-python-client>=2.0",
     "google-auth>=2.0",
+    "pypdf>=5.0",
 ]
 
 [project.optional-dependencies]
@@ -29,4 +30,3 @@ include = ["app*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-

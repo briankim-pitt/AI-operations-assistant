@@ -4,11 +4,17 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 
 from app.generation import AnswerGenerator
-from app.ingestion import chunk_documents, load_documents
 from app.retrieval import Retriever
 from app.schemas import AskRequest, AskResponse, SourceResponse
 from app.vector_store import LocalVectorStore
+from app.config import settings
+from app.connectors.google_drive import GoogleDriveConnector
 from app.embeddings import OpenAIEmbeddingProvider
+from app.ingestion import (
+    chunk_documents,
+    load_documents,
+    normalize_source_documents,
+)
 
 DATA_DIRECTORY = Path(__file__).parent.parent / "data"
 
@@ -16,8 +22,26 @@ DATA_DIRECTORY = Path(__file__).parent.parent / "data"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     documents = load_documents(DATA_DIRECTORY)
-    chunks = chunk_documents(documents)
 
+    if settings.enable_google_drive:
+        if (
+            settings.google_service_account_file is None
+            or settings.google_drive_folder_id is None
+        ):
+            raise RuntimeError(
+                "Google Drive is enabled, but its configuration is missing"
+            )
+
+        connector = GoogleDriveConnector(
+            credentials_path=settings.google_service_account_file,
+            folder_id=settings.google_drive_folder_id,
+        )
+        drive_source_documents = connector.fetch_documents()
+        documents.extend(
+            normalize_source_documents(drive_source_documents)
+        )
+
+    chunks = chunk_documents(documents)
     embedding_provider = OpenAIEmbeddingProvider()
     vector_store = LocalVectorStore(chunks, embedding_provider)
 
@@ -47,13 +71,15 @@ def ask(payload: AskRequest, request: Request) -> AskResponse:
     )
 
     sources = [
-        SourceResponse(
-            source=result.chunk.source,
-            chunk_index=result.chunk.chunk_index,
-            score=round(result.score, 4),
-            excerpt=result.chunk.content,
-        )
-        for result in results
-    ]
+    SourceResponse(
+        source=result.chunk.source,
+        provider=result.chunk.provider,
+        source_url=result.chunk.source_url,
+        chunk_index=result.chunk.chunk_index,
+        score=round(result.score, 4),
+        excerpt=result.chunk.content,
+    )
+    for result in results
+]
 
     return AskResponse(answer=answer, sources=sources)
