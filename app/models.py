@@ -6,12 +6,18 @@ from typing import Mapping
 class Document:
     content: str
     source: str
+    source_url: str = ""
+    provider: str = "local"
+    external_id: str = ""
 
 @dataclass(frozen=True)
 class Chunk:
     content: str
     source: str
     chunk_index: int
+    source_url: str = ""
+    provider: str = "local"
+    external_id: str = ""
     
 @dataclass(frozen=True)
 class SearchResult:

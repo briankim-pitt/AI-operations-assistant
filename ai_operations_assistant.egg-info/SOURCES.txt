@@ -8,12 +8,16 @@ ai_operations_assistant.egg-info/requires.txt
 ai_operations_assistant.egg-info/top_level.txt
 app/__init__.py
 app/config.py
+app/embeddings.py
 app/generation.py
+app/google_drive.py
 app/ingestion.py
 app/main.py
 app/models.py
 app/retrieval.py
 app/schemas.py
 app/vector_store.py
+app/connectors/__init__.py
+app/connectors/base.py
 tests/test_api.py
 tests/test_retrieval.py
