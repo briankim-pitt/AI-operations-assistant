@@ -27,10 +27,12 @@ class AnswerGenerator:
                 "You are an internal operations assistant. "
                 "Answer only from the supplied context. "
                 "If the context does not contain the answer, say so. "
-                "Do not invent company policies or facts."
+                "Give a concise answer in 1-3 sentences."
             ),
             input=f"Context:\n{context}\n\nQuestion:\n{question}",
-            max_output_tokens=300,
+            reasoning={"effort": "minimal"},
+            text={"verbosity": "low"},
+            max_output_tokens=800,
             store=False,
         )
 

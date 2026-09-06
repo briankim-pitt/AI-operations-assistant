@@ -2,6 +2,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from app.generation import AnswerGenerator
 from app.retrieval import Retriever
@@ -17,6 +20,9 @@ from app.ingestion import (
 )
 
 DATA_DIRECTORY = Path(__file__).parent.parent / "data"
+TEMPLATES_DIRECTORY = Path(__file__).parent / "templates"
+STATIC_DIRECTORY = Path(__file__).parent / "static"
+templates = Jinja2Templates(directory=TEMPLATES_DIRECTORY)
 
 
 @asynccontextmanager
@@ -55,6 +61,15 @@ app = FastAPI(
     title="AI Operations Assistant",
     lifespan=lifespan,
 )
+app.mount("/static", StaticFiles(directory=STATIC_DIRECTORY), name="static")
+
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+    )
 
 
 @app.get("/health")
@@ -70,16 +85,24 @@ def ask(payload: AskRequest, request: Request) -> AskResponse:
         results,
     )
 
-    sources = [
-    SourceResponse(
-        source=result.chunk.source,
-        provider=result.chunk.provider,
-        source_url=result.chunk.source_url,
-        chunk_index=result.chunk.chunk_index,
-        score=round(result.score, 4),
-        excerpt=result.chunk.content,
-    )
-    for result in results
-]
+    sources = []
+    seen_sources = set()
+
+    for result in results:
+        source_key = (result.chunk.provider, result.chunk.source)
+        if source_key in seen_sources:
+            continue
+
+        seen_sources.add(source_key)
+        sources.append(
+            SourceResponse(
+                source=result.chunk.source,
+                provider=result.chunk.provider,
+                source_url=result.chunk.source_url,
+                chunk_index=result.chunk.chunk_index,
+                score=round(result.score, 4),
+                excerpt=result.chunk.content,
+            )
+        )
 
     return AskResponse(answer=answer, sources=sources)
