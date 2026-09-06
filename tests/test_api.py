@@ -8,7 +8,7 @@ from app.main import app
 
 
 class FakeAnswerGenerator:
-    def generate(self, question, results) -> str:
+    def generate(self, question, results, history=None) -> str:
         return "Friday deployments require Head of Engineering approval."
 
 

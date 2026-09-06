@@ -79,10 +79,24 @@ def health_check() -> dict[str, str]:
 
 @app.post("/ask", response_model=AskResponse)
 def ask(payload: AskRequest, request: Request) -> AskResponse:
-    results = request.app.state.retriever.retrieve(payload.question)
+    history = [message.model_dump() for message in payload.history]
+    recent_user_questions = [
+        message.content
+        for message in payload.history
+        if message.role == "user"
+    ][-2:]
+    retrieval_query = "\n".join(
+        [*recent_user_questions, payload.question]
+    )
+
+    results = request.app.state.retriever.retrieve(
+        retrieval_query,
+        top_k=6,
+    )
     answer = request.app.state.answer_generator.generate(
         payload.question,
         results,
+        history,
     )
 
     sources = []
@@ -104,5 +118,8 @@ def ask(payload: AskRequest, request: Request) -> AskResponse:
                 excerpt=result.chunk.content,
             )
         )
+
+        if len(sources) == 3:
+            break
 
     return AskResponse(answer=answer, sources=sources)

@@ -3,6 +3,7 @@ const questionInput = document.querySelector("#question");
 const conversation = document.querySelector("#conversation");
 const intro = document.querySelector("#intro");
 const submitButton = form.querySelector("button[type='submit']");
+const sessionMessages = [];
 
 document.querySelectorAll(".suggestion").forEach((button) => {
     button.addEventListener("click", () => {
@@ -28,6 +29,7 @@ form.addEventListener("submit", async (event) => {
         return;
     }
 
+    const history = sessionMessages.slice(-10);
     intro.classList.add("is-collapsed");
     appendMessage("user", question);
     questionInput.value = "";
@@ -40,7 +42,7 @@ form.addEventListener("submit", async (event) => {
         const response = await fetch("/ask", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question }),
+            body: JSON.stringify({ question, history }),
         });
 
         const data = await response.json();
@@ -49,6 +51,7 @@ form.addEventListener("submit", async (event) => {
         }
 
         loadingMessage.remove();
+        rememberTurn(question, data.answer);
         await appendAssistantMessage(data.answer, data.sources || []);
     } catch (error) {
         loadingMessage.remove();
@@ -62,6 +65,17 @@ form.addEventListener("submit", async (event) => {
         scrollToLatest();
     }
 });
+
+function rememberTurn(question, answer) {
+    sessionMessages.push(
+        { role: "user", content: question },
+        { role: "assistant", content: answer },
+    );
+
+    if (sessionMessages.length > 10) {
+        sessionMessages.splice(0, sessionMessages.length - 10);
+    }
+}
 
 function appendMessage(role, text) {
     const message = document.createElement("article");
