@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_model: str = "gpt-5-mini"
     openai_embedding_model: str = "text-embedding-3-small"
+    embedding_cache_path: Path = Path(".cache/embeddings.sqlite3")
 
     google_service_account_file: Path | None = None
     google_drive_folder_id: str | None = None

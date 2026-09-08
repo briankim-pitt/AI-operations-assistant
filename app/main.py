@@ -13,6 +13,7 @@ from app.schemas import AskRequest, AskResponse, SourceResponse
 from app.vector_store import LocalVectorStore
 from app.config import settings
 from app.connectors.google_drive import GoogleDriveConnector
+from app.embedding_cache import CachedEmbeddingProvider
 from app.embeddings import OpenAIEmbeddingProvider
 from app.ingestion import (
     chunk_documents,
@@ -49,7 +50,12 @@ async def lifespan(app: FastAPI):
         )
 
     chunks = chunk_documents(documents)
-    embedding_provider = OpenAIEmbeddingProvider()
+    openai_embedding_provider = OpenAIEmbeddingProvider()
+    embedding_provider = CachedEmbeddingProvider(
+        provider=openai_embedding_provider,
+        database_path=settings.embedding_cache_path,
+        namespace=settings.openai_embedding_model,
+    )
     vector_store = LocalVectorStore(chunks, embedding_provider)
 
     app.state.retriever = Retriever(vector_store)

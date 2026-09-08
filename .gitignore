@@ -19,6 +19,7 @@ htmlcov/
 
 # Generated local indexes
 .rag_index/
+.cache/
 
 # Editor and operating system files
 .vscode/
