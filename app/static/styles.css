@@ -255,6 +255,11 @@ h1 {
     transform: translateY(-2px);
 }
 
+.source-card.is-primary {
+    grid-column: 1 / -1;
+    padding: 18px 20px;
+}
+
 .source-provider {
     display: block;
     margin-bottom: 6px;
@@ -272,6 +277,22 @@ h1 {
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.source-excerpt {
+    margin: 14px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.source-excerpt mark {
+    padding: 1px 2px;
+    border-radius: 3px;
+    background: #fff0a8;
+    color: inherit;
 }
 
 .composer-wrap {

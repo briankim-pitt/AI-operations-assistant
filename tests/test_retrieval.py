@@ -1,9 +1,11 @@
 from pathlib import Path
 
+from app.citations import CitationExcerptSelector
 from app.ingestion import chunk_documents, load_documents, split_sentences
 from app.models import Chunk, Document
 from app.normalization import normalize_for_search
 from app.retrieval import Retriever
+from app.tokenization import SudachiTokenizer
 from app.vector_store import LocalVectorStore
 
 DATA_DIRECTORY = Path(__file__).parent.parent / "data"
@@ -91,6 +93,39 @@ def test_hybrid_search_recovers_exact_japanese_error_code() -> None:
 
     assert results[0].chunk.source == "pipeline.md"
     assert results[0].score > results[1].score
+
+
+def test_sudachi_extracts_meaningful_japanese_tokens() -> None:
+    tokens = SudachiTokenizer().tokenize(
+        "売上ダッシュボードが更新されていません"
+    )
+
+    assert "売り上げ" in tokens
+    assert "ダッシュボード" in tokens
+    assert "更新" in tokens
+    assert "が" not in tokens
+
+
+def test_selects_exact_relevant_sentence_and_highlight_terms() -> None:
+    selector = CitationExcerptSelector(SudachiTokenizer())
+    content = (
+        "ジョブは毎日午前二時に開始します。"
+        "SRC-401ではシークレットの有効期限を確認してください。"
+        "復旧後は監視画面を確認します。"
+    )
+
+    excerpt = selector.select(
+        content,
+        "ＳＲＣ－４０１の場合は何を確認しますか？",
+        "シークレットの有効期限を確認します。",
+    )
+
+    assert excerpt.text == (
+        "SRC-401ではシークレットの有効期限を確認してください。"
+    )
+    assert "SRC" in excerpt.highlights
+    assert "シークレット" in excerpt.highlights
+    assert "有効期限" in excerpt.highlights
 
 
 def test_splits_japanese_without_spaces_at_sentence_boundaries() -> None:

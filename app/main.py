@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.citations import CitationExcerptSelector
 from app.generation import AnswerGenerator
 from app.retrieval import Retriever
 from app.schemas import AskRequest, AskResponse, SourceResponse
@@ -53,6 +54,9 @@ async def lifespan(app: FastAPI):
 
     app.state.retriever = Retriever(vector_store)
     app.state.answer_generator = AnswerGenerator()
+    app.state.citation_selector = CitationExcerptSelector(
+        vector_store.tokenizer
+    )
 
     yield
 
@@ -108,6 +112,11 @@ def ask(payload: AskRequest, request: Request) -> AskResponse:
             continue
 
         seen_sources.add(source_key)
+        relevant_excerpt = request.app.state.citation_selector.select(
+            result.chunk.content,
+            payload.question,
+            answer,
+        )
         sources.append(
             SourceResponse(
                 source=result.chunk.source,
@@ -115,7 +124,8 @@ def ask(payload: AskRequest, request: Request) -> AskResponse:
                 source_url=result.chunk.source_url,
                 chunk_index=result.chunk.chunk_index,
                 score=round(result.score, 4),
-                excerpt=result.chunk.content,
+                excerpt=relevant_excerpt.text,
+                highlights=relevant_excerpt.highlights,
             )
         )
 

@@ -112,6 +112,10 @@ async function appendAssistantMessage(answer, sources) {
         card.className = "source-card";
         card.style.animationDelay = `${index * 70}ms`;
 
+        if (index === 0) {
+            card.classList.add("is-primary");
+        }
+
         if (source.source_url) {
             card.href = source.source_url;
             card.target = "_blank";
@@ -127,10 +131,47 @@ async function appendAssistantMessage(answer, sources) {
         title.textContent = source.source;
 
         card.append(provider, title);
+
+        if (index === 0 && source.excerpt) {
+            const excerpt = document.createElement("p");
+            excerpt.className = "source-excerpt";
+            appendHighlightedText(
+                excerpt,
+                source.excerpt,
+                source.highlights || [],
+            );
+            card.append(excerpt);
+        }
+
         sourceList.append(card);
     });
 
     message.append(sourceList);
+}
+
+function appendHighlightedText(element, text, highlights) {
+    const uniqueHighlights = [...new Set(highlights)]
+        .filter(Boolean)
+        .sort((left, right) => right.length - left.length);
+
+    if (!uniqueHighlights.length) {
+        element.textContent = text;
+        return;
+    }
+
+    const escapedHighlights = uniqueHighlights.map((highlight) =>
+        highlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+    );
+    const pattern = new RegExp(`(${escapedHighlights.join("|")})`, "giu");
+
+    text.split(pattern).forEach((part) => {
+        const isHighlighted = uniqueHighlights.some(
+            (highlight) => highlight.toLocaleLowerCase() === part.toLocaleLowerCase(),
+        );
+        const node = document.createElement(isHighlighted ? "mark" : "span");
+        node.textContent = part;
+        element.append(node);
+    });
 }
 
 async function animateAnswer(element, answer) {
