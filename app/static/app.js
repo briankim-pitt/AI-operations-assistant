@@ -168,6 +168,15 @@ function appendHighlightedText(element, text, highlights) {
         const isHighlighted = uniqueHighlights.some(
             (highlight) => highlight.toLocaleLowerCase() === part.toLocaleLowerCase(),
         );
+
+        if (
+            isHighlighted
+            && element.lastElementChild?.tagName === "MARK"
+        ) {
+            element.lastElementChild.append(document.createTextNode(part));
+            return;
+        }
+
         const node = document.createElement(isHighlighted ? "mark" : "span");
         node.textContent = part;
         element.append(node);
@@ -243,7 +252,7 @@ function appendLoadingMessage() {
 
 function formatProvider(provider) {
     if (!provider || provider === "local") {
-        return "Local document";
+        return "Document";
     }
 
     return provider.replaceAll("_", " ");

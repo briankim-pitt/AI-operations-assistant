@@ -11,7 +11,6 @@ class Settings(BaseSettings):
 
     google_service_account_file: Path | None = None
     google_drive_folder_id: str | None = None
-    enable_google_drive: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

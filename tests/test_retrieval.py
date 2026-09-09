@@ -126,6 +126,8 @@ def test_selects_exact_relevant_sentence_and_highlight_terms() -> None:
     assert "SRC" in excerpt.highlights
     assert "シークレット" in excerpt.highlights
     assert "有効期限" in excerpt.highlights
+    assert "確認" not in excerpt.highlights
+    assert len(excerpt.highlights) <= 5
 
 
 def test_splits_japanese_without_spaces_at_sentence_boundaries() -> None:

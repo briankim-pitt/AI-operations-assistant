@@ -18,7 +18,6 @@ class SudachiTokenizer:
     def __init__(self) -> None:
         self._tokenizer = Dictionary().create(
             mode=SplitMode.C,
-            projection="normalized",
         )
         self._lock = Lock()
 
@@ -29,13 +28,14 @@ class SudachiTokenizer:
         ]
 
     def tokenize_with_surfaces(self, text: str) -> list[tuple[str, str]]:
-        normalized_text = normalize_for_search(text)
-
         with self._lock:
-            morphemes = self._tokenizer.tokenize(normalized_text)
+            morphemes = self._tokenizer.tokenize(text)
 
         return [
-            (morpheme.surface(), morpheme.normalized_form())
+            (
+                morpheme.surface(),
+                normalize_for_search(morpheme.normalized_form()).casefold(),
+            )
             for morpheme in morphemes
             if morpheme.part_of_speech()[0] in SEARCHABLE_PARTS_OF_SPEECH
         ]

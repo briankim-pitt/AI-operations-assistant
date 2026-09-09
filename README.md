@@ -1,5 +1,9 @@
 # AI Operations Assistant
 
+The application knowledge base is loaded exclusively from the configured Google
+Drive folder. Local Markdown files under `data/` are development fixtures and are
+not read by application startup.
+
 The local retriever uses three-signal hybrid ranking:
 
 - 70% semantic similarity from OpenAI embeddings

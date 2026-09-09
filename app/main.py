@@ -17,11 +17,9 @@ from app.embedding_cache import CachedEmbeddingProvider
 from app.embeddings import OpenAIEmbeddingProvider
 from app.ingestion import (
     chunk_documents,
-    load_documents,
     normalize_source_documents,
 )
 
-DATA_DIRECTORY = Path(__file__).parent.parent / "data"
 TEMPLATES_DIRECTORY = Path(__file__).parent / "templates"
 STATIC_DIRECTORY = Path(__file__).parent / "static"
 templates = Jinja2Templates(directory=TEMPLATES_DIRECTORY)
@@ -29,24 +27,24 @@ templates = Jinja2Templates(directory=TEMPLATES_DIRECTORY)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    documents = load_documents(DATA_DIRECTORY)
-
-    if settings.enable_google_drive:
-        if (
-            settings.google_service_account_file is None
-            or settings.google_drive_folder_id is None
-        ):
-            raise RuntimeError(
-                "Google Drive is enabled, but its configuration is missing"
-            )
-
-        connector = GoogleDriveConnector(
-            credentials_path=settings.google_service_account_file,
-            folder_id=settings.google_drive_folder_id,
+    if (
+        settings.google_service_account_file is None
+        or settings.google_drive_folder_id is None
+    ):
+        raise RuntimeError(
+            "Google Drive credentials and folder ID are required"
         )
-        drive_source_documents = connector.fetch_documents()
-        documents.extend(
-            normalize_source_documents(drive_source_documents)
+
+    connector = GoogleDriveConnector(
+        credentials_path=settings.google_service_account_file,
+        folder_id=settings.google_drive_folder_id,
+    )
+    documents = normalize_source_documents(
+        connector.fetch_documents()
+    )
+    if not documents:
+        raise RuntimeError(
+            "The configured Google Drive folder contains no supported documents"
         )
 
     chunks = chunk_documents(documents)
